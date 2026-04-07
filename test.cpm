@@ -1,17 +1,18 @@
 #include <stdio.h>
 
-typedef struct {
-    int  x;
-    int  y;
-    method int init(int x, int y) {
-        this->x = 10;
-        this->y = 10;
+// support for self. as equivalent to this->
+class Point {
+    int x;
+    int y;
+    pub int init(int x, int y) {
+        self.x = 10;
+        self.y = 10;
     }
-    method int sum() {return this->x+this->y}
-} Point;
+    pub int sum() {return this->x+this->y;}
+};
 
 
-int main(void) {
+int main() {
     Point p = .init(10,10);
     printf("%d\n", p.sum());
     return 0;
