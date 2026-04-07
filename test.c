@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 struct Point;
-int init(struct Point *this,int x,int y);
+void init(struct Point *this,int x,int y);
 int sum(struct Point *this);
 typedef struct Point{
     int x;
@@ -9,9 +9,9 @@ typedef struct Point{
     
     
 } Point;
-int init(struct Point *this,int x,int y){
-        this->x = 10;
-        this->y = 10;}
+void init(struct Point *this,int x,int y){
+        this->x = x;
+        this->y = y;}
 int sum(struct Point *this){return this->x+this->y;}
 
 

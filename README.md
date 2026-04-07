@@ -14,9 +14,9 @@ Example program:
 class Point {
     int x;
     int y;
-    pub int init(int x, int y) {
-        self.x = 10;
-        self.y = 10;
+    pub void init(int x, int y) {
+        self.x = x;
+        self.y = y;
     }
     pub int sum() {return this->x+this->y;}
 };
