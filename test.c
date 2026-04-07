@@ -16,7 +16,8 @@ int sum(struct Point *this){return this->x+this->y;}
 
 
 int main() {
-    Point p;init(&(p),10,10);
-    printf("%d\n",sum(&(p)));
+    Point p[2];init(&(p[0]),10,10);init(&(p[1]),20,20);
+    printf("%d\n",sum(&(p[0])));
+    printf("%d\n",sum(&(p[1])));
     return 0;
 }

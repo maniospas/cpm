@@ -102,7 +102,7 @@ def replace_call(source: str):
                     expression_start -= 1
                     assert expression_start>0, "failed to obtain expression just before pub method call"
                     if ret[expression_start] in ")}]": depth += 1
-                    if ret[expression_start]=="({[": depth -= 1
+                    if ret[expression_start] in "({[": depth -= 1
                     if depth<0: break
                     if depth==0 and ret[expression_start] in "=<>.+-/*%&|;,": break
                 expression_start += 1
