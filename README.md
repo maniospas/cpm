@@ -33,7 +33,7 @@ Convert the program to C and run it:
 
 ```bash
 python3 -m cpm test.cpm
->>> test.cpm >> test.c
+>>> test.cpm ceonverted to test.c
 gcc test.c -o test -O2
 ./test
 >>> 20

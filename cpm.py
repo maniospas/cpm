@@ -13,6 +13,17 @@ def find_next(source: str, i: int, needle: str, end=None):
     if i<len(source): return i
     return None
 
+def safeget(source: str, i: int):
+    if i<0 or i>=len(source): return ""
+    return source[i]
+
+def find_next_kw(source: str, i: int, needle: str, end=None):
+    if end is None: end=len(source)
+    while not (eq(source, i, needle) and safeget(source, i-1) in " \n\t\r[](){}=<>.+-/*%&|;,!" and safeget(source, i+len(needle)) in " \n\t\r[](){}=<>.+-/*%&|;,!") and i<end:
+        i += 1
+    if i<len(source): return i
+    return None
+
 def transpile_struct(source: str, i: int):
     helpers_before = ""
     helpers = ""
@@ -33,7 +44,7 @@ def transpile_struct(source: str, i: int):
     i = start+1
     while i<end:
         prev_i = i
-        i = find_next(source, i, "pub")
+        i = find_next_kw(source, i, "pub")
         if i is None:
             ret += source[prev_i:end]
             break
@@ -75,7 +86,7 @@ def transpile(source: str):
     i = 0
     while i<len(source):
         prev_i = i
-        i = find_next(source, i, "class")
+        i = find_next_kw(source, i, "class")
         if i is None:
             ret += source[prev_i:]
             break
@@ -104,7 +115,7 @@ def replace_call(source: str):
                     if ret[expression_start] in ")}]": depth += 1
                     if ret[expression_start] in "({[": depth -= 1
                     if depth<0: break
-                    if depth==0 and ret[expression_start] in "=<>.+-/*%&|;,": break
+                    if depth==0 and ret[expression_start] in "=<>.+-/*%&|;,!": break
                 expression_start += 1
                 argument = ret[expression_start:].strip()
                 if take_referefence: argument = "&("+argument+")"
@@ -123,4 +134,4 @@ if __name__ == '__main__':
     src = infile.read_text(encoding='utf-8')
     out = replace_call(transpile(src))
     infile.with_suffix('.c').write_text(out, encoding='utf-8')
-    print(f"{infile.name} >> {infile.with_suffix('.c').name}")
+    print(f"{infile.name} converted to {infile.with_suffix('.c').name}")
