@@ -58,14 +58,18 @@ They also count as publicly accessible functions, with the
 difference that there is a hidden pointer to the struct on the variable `this`.
 Use _self_ instead of _*this_ for more comprehensive code.
 
-Methods that do not declare any return type are made to return `this`. This
-means that the following syntax is valid:
+Methods that do not declare any return type are made to return `this`.
+This means that the following syntax is valid:
 
 ```c
 class Point {
     i64 x;
     i64 y;
-    pub init(i64 x, i64 y) {self.x = x; self.y = y;}
+    pub init(i64 x, i64 y) {
+        if(!this) return this; // elegant handling of NULL
+        self.x = x;
+        self.y = y;
+    }
     pub i64 sum() {return self.x+self.y;}
 };
 ...
@@ -91,13 +95,10 @@ This means, that you can try to delete the same pointers multiple times. Here is
 
 ```c
 Point* create_p() {
-   Point* p1 = malloc(sizeof*p1);
-   Point* p2 = malloc(sizeof*p2);
-   Point* p3 = malloc(sizeof*p3);
+   Point* p1 = malloc(sizeof*p1)->init(10,10);
+   Point* p2 = malloc(sizeof*p2)->init(10,10);
+   Point* p3 = malloc(sizeof*p3)->init(10,10);
    if(!(p1&&p2&&p3)) goto done:
-   p1->init(10,10);
-   p2->init(10,10);
-   p3->init(10,10);
 
    done:
    delete(p2);

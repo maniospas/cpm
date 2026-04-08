@@ -23,10 +23,8 @@ typedef struct Point{
     
     
 } Point;
-struct Point* init(struct Point *this,i64 x,i64 y){
-        (*this).x = x;
-        (*this).y = y;return this;}
-i64 sum(struct Point *this){return this->x+this->y;}
+struct Point* init(struct Point *this,i64 x,i64 y){(*this).x = x; (*this).y = y;return this;}
+i64 sum(struct Point *this){return (*this).x+(*this).y;}
 
 int main() {
     Point* p =init(malloc(sizeof*p),10,10);
