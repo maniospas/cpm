@@ -53,6 +53,8 @@ gcc test.c -o test -O2
 - `pub rettype name(args)` declares methods **inside classes**
 - `obj.method(args)` or `objptr->method(args)` call mehods, where the first case uses the object's reference
 
+METHODS DO NOT INCREASE CLASS SIZE.
+
 Methods of the same struct use forward declarations to see each other and the struct.
 They also count as publicly accessible functions, with the
 difference that there is a hidden pointer to the struct on the variable `this`.
@@ -74,7 +76,7 @@ class Point {
 };
 ...
 
-Point* p = malloc(sizeof*p)->init(10,10);
+Point *p = malloc(sizeof*p)->init(10,10);
 ```
 
 For the same class, C± also allows in-place initialization with the following pattern.
@@ -91,7 +93,7 @@ Prefer using these, as they are generally easier to work with. Furthermore,
 
 An important feature is that all identical `cstr` in your program are forced to have the same memory address,
 so that you can write code like the following; most compilers support literal merging -and have it be turned
-on by default- but that is technically undefined behavior in the C specs. Not in C±.
+on by default- but that is technically unspecified behavior in the C specs. Not in C±.
 
 ```c
 #include <stdio.h>
@@ -104,7 +106,7 @@ int main() {
 }
 ```
 
-**delete**
+**delete & defaults**
 
 C± defines a `delete` macro that performs a `free` after a NULL check and then sets to NULL.
 This means, that you can try to delete the same pointers multiple times. Here is an example.
@@ -123,4 +125,22 @@ Point* create_p() {
 }
 ```
 
+A `defaults` macro can also be used within methods to return a default value if `this` is NULL.
+Below is an example that is safe against failing allocations.
+
+```c
+class Point {
+    i64 x;
+    i64 y;
+    pub init(i64 x, i64 y) {
+        defaults(NULL);
+        self.x = x;
+        self.y = y;
+    }
+    pub i64 sum() {
+        defaults(0);
+        return self.x+self.y;
+    }
+};
+...
 

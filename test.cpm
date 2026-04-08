@@ -7,13 +7,17 @@
 class Point {
     i64 x;
     i64 y;
-    pub init(i64 x, i64 y) {self.x = x; self.y = y;}
+    pub init(i64 x, i64 y) {
+        defaults(NULL)
+        self.x = x;
+        self.y = y;
+    }
     pub i64 sum() {return self.x+self.y;}
 };
 
 int main() {
     Point* p = malloc(sizeof*p)->init(10,10);
     printf("%ld\n", p->sum());
-    printf("%ld\n", p->sum());
+    printf("%ld\n", p->sum());s
     return 0;
 }

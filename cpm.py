@@ -155,6 +155,7 @@ def safety(source: str):
         +"typedef double f64;\n"
         +"typedef const char* cstr;\n"
         +"#define delete(ptr) if(ptr)free(ptr);ptr=0;\n"
+        +"#define defaults(expr) if(!this) return expr;"
         +source.replace("cstr", "const char*")
     )
     return ret
