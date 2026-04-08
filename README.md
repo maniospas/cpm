@@ -8,7 +8,7 @@ Valid programs are all C programs, with the fhe addition of some zero-cost abstr
 
 ## 🚀 Quickstart
 
-Consider thie example program:
+Consider this example program:
 
 ```c
 // test.cpm
