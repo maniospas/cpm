@@ -1,5 +1,6 @@
 import sys
 import pathlib
+import re
 
 associations: dict[str,str] = dict()
 
@@ -52,10 +53,12 @@ def transpile_struct(source: str, i: int):
         i += len("pub")
         signature_start = find_next(source, i, "(", end)
         pub_name = source[i:signature_start].strip().split(" ")[-1]
+        has_ret_type = pub_name!=source[i:signature_start].strip()
         assert pub_name not in associations, "already defined "+pub_name+" for class "+struct_name
         #print(struct_name+"."+pub_name)
         associations[pub_name] = struct_name
         signature = source[i:signature_start].strip()+"(struct "+struct_name+" *this,"
+        if not has_ret_type: signature = "struct "+struct_name+"* "+signature
         signature_end = find_next(source, i, "{", end)
         signature += source[signature_start+1:signature_end]
         signature = signature.replace(",)", ")").rstrip() # TODO: not proper accounting for no arguments
@@ -68,20 +71,24 @@ def transpile_struct(source: str, i: int):
             body_end += 1
         assert not depth, "pub definition never ended "+source[signature_end:body_end]
         helpers_before += signature+";\n"
-        helpers += signature+source[signature_end:body_end].rstrip()+"}\n"
+        helpers += signature+source[signature_end:body_end].rstrip()
+        if not has_ret_type: helpers += "return this;"
+        helpers += "}\n"
         i = body_end + 1
 
     i = find_next(source, end, ";")
     ret += source[end:i]+" "+struct_name+";\n"
     if helpers_before: helpers_before = "struct "+struct_name+";\n"+helpers_before
-    return i+1, helpers_before+ret+helpers.replace("self.", "this->")
+    return i+1, helpers_before+ret+helpers.replace("self", "(*this)")
 
 
 def transpile(source: str):
+    # canonical form with less spaces and line breaks (we DO need `()` to not have spaces inside)
     prev_len = 0
     while len(source)!=prev_len:
-        source = source.replace(" )", ")").replace("( ", ")").replace(", ", ",").replace(" ,", ",").replace(". ", ".")
+        source = source.replace(" )", ")").replace("( ", ")").replace(", ", ",").replace(" ,", ",").replace(". ", ".").replace("\n\n", "\n")
         prev_len = len(source)
+    # parse class definitions
     ret = ""
     i = 0
     while i<len(source):
@@ -114,24 +121,78 @@ def replace_call(source: str):
                     assert expression_start>0, "failed to obtain expression just before pub method call"
                     if ret[expression_start] in ")}]": depth += 1
                     if ret[expression_start] in "({[": depth -= 1
+                    if depth==0 and ret[expression_start] in "=<>.+-/*%&|;,!)}]": break
                     if depth<0: break
-                    if depth==0 and ret[expression_start] in "=<>.+-/*%&|;,!": break
                 expression_start += 1
                 argument = ret[expression_start:].strip()
+                ret = ret[:expression_start]
+                if argument.startswith(associations[pub_name]+" "):
+                    argument = argument[len(associations[pub_name])+1:]
+                    ret += associations[pub_name]+" "+argument+";"
+                elif argument.startswith(associations[pub_name]+"*"):
+                    argument = argument[len(associations[pub_name])+1:]
+                    ret += associations[pub_name]+" "+argument+";"
                 if take_referefence: argument = "&("+argument+")"
-                ret = ret[:expression_start]+pub_name+"("+argument+","
+                ret += pub_name+"("+argument+","
                 continue
             i = prev_i
         ret += source[i]
         i += 1
     return ret.replace(",)",")")
 
+def safety(source: str):
+    ret = (
+        "#include<stdint.h>\n"
+        +"typedef int8_t  i8;\n"
+        +"typedef int16_t i16;\n"
+        +"typedef int32_t i32;\n"
+        +"typedef int64_t i64;\n"
+        +"typedef uint8_t  u8;\n"
+        +"typedef uint16_t u16;\n"
+        +"typedef uint32_t u32;\n"
+        +"typedef uint64_t u64;\n"
+        +"typedef float f32;\n"
+        +"typedef double f64;\n"
+        +"#define delete(ptr) if(ptr)free(ptr);ptr=0;\n"
+        +source.replace("cstr", "const char*")
+    )
+    return ret
 
 if __name__ == '__main__':
     if len(sys.argv) != 2: print("Usage: python cpm.py <file.cpm>"); sys.exit(1)
     infile = pathlib.Path(sys.argv[1])
     if not infile.suffix == '.cpm': print("Error: input file must have .cpm extension"); sys.exit(1)
     src = infile.read_text(encoding='utf-8')
-    out = replace_call(transpile(src))
+    # remove comments
+    _comment_re = re.compile(
+        r'''
+        //.*?$                         |   # // single‑line comment
+        /\*.*?\*/                      |   # /* … */ multi‑line comment
+        "                              # opening quote of a string
+            (?:\\.|[^"\\])*            #   any escaped char or non‑quote
+        "                              # closing quote
+        ''',
+        re.DOTALL | re.MULTILINE | re.VERBOSE
+    )
+    def _replacer(m: re.Match) -> str:
+        return m.group(0) if m.group(0).startswith('"') else '' # If the match starts with a quote we keep it (it’s a string literal).
+    src = _comment_re.sub(_replacer, src)
+    # take strings away
+    _str_table: list[str] = []
+    _str_pat = re.compile(r'"(?:\\.|[^"\\])*"')
+    def repl(m: re.Match) -> str:
+        _str_table.append(m.group(0))
+        return f"\"{len(_str_table)-1}\""
+    src = _str_pat.sub(repl, src)
+    # actually transpile
+    out = transpile(src)
+    out = replace_call(out)
+    out = safety(out)
+    # re-inject strings
+    def repl(m: re.Match) -> str:
+        idx = int(m.group(1))
+        return _str_table[idx]
+    out = re.sub(r'"(\d+)"', repl, out)
+
     infile.with_suffix('.c').write_text(out, encoding='utf-8')
     print(f"{infile.name} converted to {infile.with_suffix('.c').name}")
