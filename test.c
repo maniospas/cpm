@@ -1,3 +1,4 @@
+const char* ____cpm0="%ld\n";
 #include<stdint.h>
 typedef int8_t  i8;
 typedef int16_t i16;
@@ -9,6 +10,7 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 typedef float f32;
 typedef double f64;
+typedef const char* cstr;
 #define delete(ptr) if(ptr)free(ptr);ptr=0;
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +30,7 @@ i64 sum(struct Point *this){return (*this).x+(*this).y;}
 
 int main() {
     Point* p =init(malloc(sizeof*p),10,10);
-    printf("%ld\n",sum(p));
+    printf(____cpm0,sum(p));
+    printf(____cpm0,sum(p));
     return 0;
 }

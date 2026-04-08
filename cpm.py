@@ -153,6 +153,7 @@ def safety(source: str):
         +"typedef uint64_t u64;\n"
         +"typedef float f32;\n"
         +"typedef double f64;\n"
+        +"typedef const char* cstr;\n"
         +"#define delete(ptr) if(ptr)free(ptr);ptr=0;\n"
         +source.replace("cstr", "const char*")
     )
@@ -188,11 +189,23 @@ if __name__ == '__main__':
     out = transpile(src)
     out = replace_call(out)
     out = safety(out)
+    # this is optional but a nice feature to have by merging string defs across multiple places
+    table_preamble = ""
+    found_strings: dict[str, str] = dict()
+    for i, raw_string in enumerate(_str_table):
+        found_string = found_strings.get(raw_string, None)
+        if found_string is not None:
+            _str_table[i] = found_string
+            continue
+        found_string = "____cpm"+str(len(found_strings))
+        found_strings[raw_string] = found_string
+        _str_table[i] = found_string
+        table_preamble += "const char* "+found_string+"="+raw_string+";\n"
     # re-inject strings
     def repl(m: re.Match) -> str:
         idx = int(m.group(1))
         return _str_table[idx]
-    out = re.sub(r'"(\d+)"', repl, out)
+    out = table_preamble+re.sub(r'"(\d+)"', repl, out)
 
     infile.with_suffix('.c').write_text(out, encoding='utf-8')
     print(f"{infile.name} converted to {infile.with_suffix('.c').name}")

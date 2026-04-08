@@ -86,7 +86,23 @@ Point p.init(10,10); // equivalent to Point p;p.init(10,10);
 **ergonomic types**
 
 C± typedefs fixed-width arithmetic types, namely i8-i64, u8-u64, f32, and f64.
-Prefer using these, as they are generally easier to work with.
+Prefer using these, as they are generally easier to work with. Furthermore,
+`const char*` is typdef-ed as `cstr`.
+
+An important feature is that all identical `cstr` in your program are forced to have the same memory address,
+so that you can write code like the following; most compilers support literal merging -and have it be turned
+on by default- but that is technically undefined behavior in the C specs. Not in C±.
+
+```c
+#include <stdio.h>
+
+int main() {
+    cstr x = "A";
+    cstr y = "A";
+    if(x==y) printf("A!\n");
+    return 0;
+}
+```
 
 **delete**
 

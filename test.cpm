@@ -14,5 +14,6 @@ class Point {
 int main() {
     Point* p = malloc(sizeof*p)->init(10,10);
     printf("%ld\n", p->sum());
+    printf("%ld\n", p->sum());
     return 0;
 }
